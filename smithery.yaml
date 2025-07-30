@@ -4,7 +4,7 @@ build:
   dockerBuildPath: "."
 startCommand:
   type: "mcp"
-  command: ["uv", "run", "python", "defillama.py"]
+  command: ["uv", "run", "python", "smithery_server.py"]
   configSchema:
     type: "object"
     properties: {}
