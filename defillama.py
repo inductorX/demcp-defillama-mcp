@@ -4,11 +4,9 @@ import json
 import os
 from mcp.server.fastmcp import FastMCP
 
-# Initialize Defillama mcp server
-# Use environment variables for host and port configuration for deployment platforms
-HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", "8090"))
-mcp = FastMCP("defillama_mcp", host=HOST, port=PORT)
+# Initialize Defillama mcp server  
+# Using stdio transport for Smithery compatibility
+mcp = FastMCP("defillama_mcp")
 
 # Constants
 DEFI_API_BASE = "https://api.llama.fi"
@@ -327,6 +325,6 @@ async def make_request(url: str) -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    # Use SSE transport which is supported by this version of FastMCP
-    # Host and port are configured in the FastMCP constructor above
-    mcp.run(transport='sse')
+    # Use stdio transport for Smithery compatibility
+    # Smithery requires either JSON-RPC over HTTP or stdio transport
+    mcp.run(transport='stdio')
