@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """
-Smithery-compatible HTTP server for DeFi Llama MCP.
-Implements Streamable HTTP with /mcp endpoint as required by Smithery.
+Smithery-compatible MCP server using Streamable HTTP transport.
+Implements proper MCP protocol over HTTP as required by Smithery.
 """
 import asyncio
 import json
 import os
-from urllib.parse import parse_qs
+import uuid
+from typing import Dict, Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
+from sse_starlette.sse import EventSourceResponse
 import uvicorn
 from defillama import mcp
 
 app = FastAPI(title="DeFi Llama MCP Server")
+
+# Store active MCP sessions
+sessions: Dict[str, Any] = {}
 
 @app.get("/mcp")
 @app.post("/mcp") 

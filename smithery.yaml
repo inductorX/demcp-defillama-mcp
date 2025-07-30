@@ -3,7 +3,8 @@ build:
   dockerfile: "Dockerfile"
   dockerBuildPath: "."
 startCommand:
-  type: "http"
+  type: "mcp"
+  command: ["uv", "run", "python", "defillama.py"]
   configSchema:
     type: "object"
     properties: {}
