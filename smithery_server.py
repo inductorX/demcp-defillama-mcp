@@ -28,6 +28,7 @@ async def get_mcp():
 STATIC_TOOLS = [
     {
         "name": "get_protocols",
+        "title": "Get DeFi Protocols",
         "description": "Retrieve a list of all DeFi protocols from DeFi Llama, limited to the first 20 results",
         "inputSchema": {
             "type": "object",

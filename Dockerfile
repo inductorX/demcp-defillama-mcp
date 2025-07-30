@@ -15,4 +15,4 @@ RUN uv sync --frozen
 COPY . .
 
 EXPOSE 8090
-CMD ["uv", "run", "python", "smithery_server.py"]
+CMD ["uv", "run", "python", "test_server.py"]
