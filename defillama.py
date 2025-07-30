@@ -1,10 +1,14 @@
 from typing import Any
 import httpx
 import json
+import os
 from mcp.server.fastmcp import FastMCP
 
 # Initialize Defillama mcp sse server
-mcp = FastMCP("defillama-mcp", host="127.0.0.1", port=8080)
+# Use environment variables for host and port configuration
+HOST = os.getenv("MCP_HOST", "0.0.0.0")
+PORT = int(os.getenv("MCP_PORT", "8080"))
+mcp = FastMCP("defillama-mcp", host=HOST, port=PORT)
 
 # Constants
 DEFI_API_BASE = "https://api.llama.fi"
