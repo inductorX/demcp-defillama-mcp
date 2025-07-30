@@ -1,7 +1,7 @@
 name: defillama_mcp
 description: "Defillama MCP"
 version: 1.0.0
-model: stdio
+model: sse
 env:
 mcp_config:
   tools:

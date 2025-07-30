@@ -5,8 +5,10 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 # Initialize Defillama mcp server
-# For stdio transport, no host/port configuration is needed
-mcp = FastMCP("defillama-mcp")
+# Use environment variables for host and port configuration
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8080"))
+mcp = FastMCP("defillama_mcp", host=HOST, port=PORT)
 
 # Constants
 DEFI_API_BASE = "https://api.llama.fi"
@@ -124,4 +126,4 @@ async def make_request(url: str) -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    mcp.run(transport='stdio')
+    mcp.run(transport='sse')
