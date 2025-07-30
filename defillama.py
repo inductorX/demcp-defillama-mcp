@@ -6,8 +6,9 @@ from mcp.server.fastmcp import FastMCP
 
 # Initialize Defillama mcp sse server
 # Use environment variables for host and port configuration
-HOST = os.getenv("MCP_HOST", "0.0.0.0")
-PORT = int(os.getenv("MCP_PORT", "8080"))
+# PORT is the standard environment variable used by cloud platforms
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8080"))
 mcp = FastMCP("defillama-mcp", host=HOST, port=PORT)
 
 # Constants
