@@ -210,7 +210,11 @@ STATIC_TOOLS = [
     }
 ]
 
-app = FastAPI(title="DeFi Llama MCP Server")
+app = FastAPI(
+    title="DeFi Llama MCP Server",
+    description="Fast tool discovery with lazy loading",
+    version="1.0.0"
+)
 
 # Store active MCP sessions
 sessions: Dict[str, Any] = {}
@@ -554,6 +558,55 @@ async def mcp_endpoint(request: Request):
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "server": "defillama_mcp"}
+
+@app.get("/status")
+async def status_check():
+    """Status endpoint for quick connectivity check"""
+    return {
+        "status": "ready",
+        "server": "defillama_mcp", 
+        "version": "1.0.0",
+        "tools_available": len(STATIC_TOOLS),
+        "lazy_loading": True
+    }
+
+@app.post("/")
+async def root_post(request: Request):
+    """Handle POST requests to root - some MCP clients try this"""
+    print(f"🔍 Root POST Request: {request.url}")
+    try:
+        body = await request.json()
+        print(f"🔍 Root POST Body: {body}")
+        
+        # If it's an MCP request, redirect to proper handling
+        if body.get("jsonrpc") == "2.0":
+            if body.get("method") == "tools/list":
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": {"tools": STATIC_TOOLS}
+                })
+            elif body.get("method") == "initialize":
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {
+                            "tools": {"listChanged": False},
+                            "resources": {"listChanged": False},
+                            "prompts": {"listChanged": False}
+                        },
+                        "serverInfo": {
+                            "name": "defillama_mcp",
+                            "version": "1.0.0"
+                        }
+                    }
+                })
+    except:
+        pass
+    
+    return {"status": "ok", "server": "defillama_mcp", "version": "1.0.0"}
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def catch_all(request: Request, path: str):
