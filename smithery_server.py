@@ -14,6 +14,192 @@ from sse_starlette.sse import EventSourceResponse
 import uvicorn
 from defillama import mcp
 
+# Static tool definitions for lazy loading without full MCP initialization
+STATIC_TOOLS = [
+    {
+        "name": "get_protocols",
+        "description": "Retrieve a list of all DeFi protocols from DeFi Llama, limited to the first 20 results",
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "get_protocol_tvl", 
+        "description": "Get Total Value Locked (TVL) information for a specific DeFi protocol",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "protocol": {
+                    "type": "string",
+                    "description": "Protocol name (e.g., 'aave', 'uniswap')"
+                }
+            },
+            "required": ["protocol"]
+        }
+    },
+    {
+        "name": "get_chain_tvl",
+        "description": "Retrieve historical Total Value Locked (TVL) data for a specific blockchain", 
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "chain": {
+                    "type": "string",
+                    "description": "Chain name (e.g., 'ethereum', 'bsc')"
+                }
+            },
+            "required": ["chain"]
+        }
+    },
+    {
+        "name": "get_token_prices",
+        "description": "Get current price information for a specific token",
+        "inputSchema": {
+            "type": "object", 
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "description": "Token identifier (e.g., 'ethereum:0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')"
+                }
+            },
+            "required": ["token"]
+        }
+    },
+    {
+        "name": "get_pools",
+        "description": "Retrieve a list of all liquidity pools from DeFi Llama, limited to the first 30 results",
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "get_pool_tvl",
+        "description": "Get detailed information about a specific liquidity pool by its ID",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pool": {
+                    "type": "string", 
+                    "description": "Pool ID (e.g., '747c1d2a-c668-4682-b9f9-296708a3dd90')"
+                }
+            },
+            "required": ["pool"]
+        }
+    },
+    {
+        "name": "get_pools_enriched",
+        "description": "Get enriched pools data with predictions and additional metadata",
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "get_pool_chart",
+        "description": "Get historical APY and TVL data for a specific pool",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pool": {
+                    "type": "string",
+                    "description": "Pool ID"
+                }
+            },
+            "required": ["pool"]
+        }
+    },
+    {
+        "name": "get_multiple_token_prices",
+        "description": "Get current prices for multiple tokens at once",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "tokens": {
+                    "type": "string",
+                    "description": "Comma-separated list of token identifiers"
+                }
+            },
+            "required": ["tokens"]
+        }
+    },
+    {
+        "name": "get_token_price_history",
+        "description": "Get historical prices for a token over time",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string", 
+                    "description": "Token identifier"
+                },
+                "span": {
+                    "type": "integer",
+                    "description": "Number of days of history (default: 30, max: 365)",
+                    "default": 30
+                }
+            },
+            "required": ["token"]
+        }
+    },
+    {
+        "name": "get_all_chains_tvl",
+        "description": "Get TVL data for all chains",
+        "inputSchema": {
+            "type": "object", 
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "get_protocol_details",
+        "description": "Get detailed information about a specific protocol including all metadata",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "protocol": {
+                    "type": "string",
+                    "description": "Protocol slug/name"
+                }
+            },
+            "required": ["protocol"]
+        }
+    },
+    {
+        "name": "get_top_protocols",
+        "description": "Get top protocols by TVL with optional category filtering",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "Optional category filter (e.g., 'DEXes', 'Lending', 'Liquid Staking')",
+                    "default": ""
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "search_protocols",
+        "description": "Search for protocols by name or symbol", 
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search term (protocol name, symbol, or partial match)"
+                }
+            },
+            "required": ["query"]
+        }
+    }
+]
+
 app = FastAPI(title="DeFi Llama MCP Server")
 
 # Store active MCP sessions
@@ -33,43 +219,23 @@ async def mcp_endpoint(request: Request):
         
         # Handle different HTTP methods
         if request.method == "GET":
-            # Return server capabilities and tool list for discovery
-            try:
-                tools_list = await mcp.list_tools()
-                tools = [
-                    {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "inputSchema": tool.inputSchema
-                    } 
-                    for tool in tools_list
-                ]
-                
-                return JSONResponse({
-                    "jsonrpc": "2.0",
-                    "id": "discovery",
-                    "result": {
-                        "capabilities": {
-                            "tools": {"listChanged": False},
-                            "resources": {"listChanged": False},
-                            "prompts": {"listChanged": False}
-                        },
-                        "serverInfo": {
-                            "name": "defillama_mcp",
-                            "version": "1.0.0"
-                        },
-                        "tools": tools
-                    }
-                })
-            except Exception as e:
-                return JSONResponse({
-                    "jsonrpc": "2.0",
-                    "id": "discovery",
-                    "error": {
-                        "code": -32603,
-                        "message": f"Failed to get server info: {str(e)}"
-                    }
-                })
+            # Return server capabilities and tool list for discovery using static definitions
+            return JSONResponse({
+                "jsonrpc": "2.0",
+                "id": "discovery",
+                "result": {
+                    "capabilities": {
+                        "tools": {"listChanged": False},
+                        "resources": {"listChanged": False},
+                        "prompts": {"listChanged": False}
+                    },
+                    "serverInfo": {
+                        "name": "defillama_mcp",
+                        "version": "1.0.0"
+                    },
+                    "tools": STATIC_TOOLS
+                }
+            })
         
         elif request.method == "POST":
             # Handle JSON-RPC requests
@@ -104,23 +270,11 @@ async def mcp_endpoint(request: Request):
                 })
             
             elif body.get("method") == "tools/list":
-                try:
-                    tools_list = await mcp.list_tools()
-                    tools = [tool.model_dump() for tool in tools_list]
-                    return JSONResponse({
-                        "jsonrpc": "2.0",
-                        "id": body.get("id"),
-                        "result": {"tools": tools}
-                    })
-                except Exception as e:
-                    return JSONResponse({
-                        "jsonrpc": "2.0",
-                        "id": body.get("id"),
-                        "error": {
-                            "code": -32603,
-                            "message": f"Failed to list tools: {str(e)}"
-                        }
-                    })
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": {"tools": STATIC_TOOLS}
+                })
             
             elif body.get("method") == "tools/call":
                 tool_name = body.get("params", {}).get("name")
