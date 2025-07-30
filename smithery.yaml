@@ -1,0 +1,4 @@
+version: 1
+start:
+  command: ["uv", "run", "defillama.py"]
+  port: 8090

@@ -12,5 +12,5 @@ COPY . .
 RUN uv venv
 RUN uv pip install -e .
 
-EXPOSE 8080
+EXPOSE 8090
 CMD ["uv", "run", "defillama.py"]

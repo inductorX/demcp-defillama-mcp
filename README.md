@@ -66,7 +66,7 @@ cd defillama-mcp
 docker build -t defillama-mcp .
 
 # Run the container
-docker run -p 8080:8080 defillama-mcp
+docker run -p 8090:8090 defillama-mcp
 ```
 
 ## Usage
@@ -91,7 +91,7 @@ import httpx
 async def get_protocol_data(protocol_name: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "http://localhost:8080/tools/get_protocol_tvl",
+            "http://localhost:8090/tools/get_protocol_tvl",
             json={"protocol": protocol_name}
         )
         return response.json()
@@ -110,7 +110,7 @@ from langchain.agents import initialize_agent
 from langchain.llms import OpenAI
 
 # Load DeFiLlama MCP tools
-tools = load_tools(["defillama-mcp"], base_url="http://localhost:8080")
+tools = load_tools(["defillama-mcp"], base_url="http://localhost:8090")
 
 # Initialize an agent with the tools
 llm = OpenAI(temperature=0)
@@ -131,7 +131,7 @@ financial_analyst = ConversableAgent(
         "tools": [
             {
                 "name": "defillama_protocol_tvl",
-                "url": "http://localhost:8080/tools/get_protocol_tvl"
+                "url": "http://localhost:8090/tools/get_protocol_tvl"
             }
         ]
     }
