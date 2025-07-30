@@ -327,5 +327,9 @@ async def make_request(url: str) -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    # Use SSE transport which provides streaming HTTP interface for Smithery
+    # Use SSE transport for Smithery compatibility
+    # This provides streaming HTTP endpoints that Smithery can auto-detect
+    print("🚀 Starting DeFi Llama MCP Server with SSE transport...")
+    print(f"📡 Server will be available at http://{HOST}:{PORT}")
+    print("🔧 SSE endpoints: /sse/ and /messages/")
     mcp.run(transport='sse')
