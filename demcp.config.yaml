@@ -1,7 +1,7 @@
-name: demcp_defillama_mcp
+name: defillama_mcp
 description: "Defillama MCP"
 version: 1.0.0
-model: sse
+model: stdio
 env:
 mcp_config:
   tools:
@@ -21,7 +21,3 @@ start_config:
   command: "python"
   args:
     - "defillama.py"
-    - "--allow-env"
-    - "--allow-net"
-    - "--allow-read"
-    - "jsr:@demcp/defillama-mcp"
