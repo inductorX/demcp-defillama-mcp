@@ -12,17 +12,15 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 import uvicorn
-# Import MCP module but don't initialize it immediately
-import defillama
-
 # Global variable to hold MCP instance when needed
 _mcp_instance = None
 
 async def get_mcp():
-    """Lazy initialization of MCP instance"""
+    """Lazy initialization of MCP instance - only import when needed"""
     global _mcp_instance
     if _mcp_instance is None:
-        print("🔧 Initializing MCP instance for tool execution...")
+        print("🔧 Importing and initializing MCP instance for tool execution...")
+        import defillama
         _mcp_instance = defillama.mcp
     return _mcp_instance
 
@@ -228,23 +226,37 @@ async def sse_endpoint(request: Request):
     print(f"🔍 SSE Request: {request.method} {request.url}")
     print(f"🔍 Headers: {dict(request.headers)}")
     
-    # Return server capabilities for SSE-based tool discovery
-    return JSONResponse({
-        "jsonrpc": "2.0",
-        "id": "sse-discovery",
-        "result": {
-            "capabilities": {
-                "tools": {"listChanged": False},
-                "resources": {"listChanged": False},
-                "prompts": {"listChanged": False}
-            },
-            "serverInfo": {
-                "name": "defillama_mcp",
-                "version": "1.0.0"
-            },
-            "tools": STATIC_TOOLS
+    async def generate():
+        # Send initialization response as SSE
+        init_response = {
+            "jsonrpc": "2.0",
+            "id": "init",
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {
+                    "tools": {"listChanged": False},
+                    "resources": {"listChanged": False},
+                    "prompts": {"listChanged": False}
+                },
+                "serverInfo": {
+                    "name": "defillama_mcp",
+                    "version": "1.0.0"
+                }
+            }
         }
-    })
+        yield f"data: {json.dumps(init_response)}\n\n"
+        
+        # Send tools list as SSE  
+        tools_response = {
+            "jsonrpc": "2.0",
+            "id": "tools",
+            "result": {
+                "tools": STATIC_TOOLS
+            }
+        }
+        yield f"data: {json.dumps(tools_response)}\n\n"
+    
+    return EventSourceResponse(generate())
 
 @app.post("/messages")
 async def messages_endpoint(request: Request):
@@ -275,6 +287,22 @@ async def messages_endpoint(request: Request):
                     "version": "1.0.0"
                 }
             }
+        })
+    
+    elif body.get("method") == "initialized":
+        # Acknowledge initialization completion
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {}
+        })
+    
+    elif body.get("method") == "ping":
+        # Handle ping requests
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {}
         })
     
     elif body.get("method") == "tools/list":
@@ -400,7 +428,7 @@ async def mcp_endpoint(request: Request):
                     "jsonrpc": "2.0",
                     "id": body.get("id"),
                     "result": {
-                        "protocolVersion": "1.0.0",
+                        "protocolVersion": "2024-11-05",
                         "capabilities": {
                             "tools": {"listChanged": False},
                             "resources": {"listChanged": False},
@@ -411,6 +439,20 @@ async def mcp_endpoint(request: Request):
                             "version": "1.0.0"
                         }
                     }
+                })
+            
+            elif body.get("method") == "initialized":
+                return JSONResponse({
+                    "jsonrpc": "2.0", 
+                    "id": body.get("id"),
+                    "result": {}
+                })
+            
+            elif body.get("method") == "ping":
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"), 
+                    "result": {}
                 })
             
             elif body.get("method") == "tools/list":
