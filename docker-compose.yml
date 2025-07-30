@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  defillama-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: defillama-mcp-server
+    restart: unless-stopped
+    environment:
+      # DefiLlama MCP Server Configuration
+      - DEFILLAMA_CACHE_TTL=300
+      - DEFILLAMA_REQUEST_DELAY=0.1
+      - DEFILLAMA_TIMEOUT=30
+      # Python settings
+      - PYTHONUNBUFFERED=1
+    ports:
+      # Map container port 8000 to host port 8000
+      - "8000:8000"
+    volumes:
+      # Optional: Mount logs directory
+      - ./logs:/app/logs
+    networks:
+      - defillama-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; print('Health check passed')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  defillama-network:
+    driver: bridge
+
+volumes:
+  logs:

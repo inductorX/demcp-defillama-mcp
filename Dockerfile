@@ -1,18 +1,48 @@
-FROM python:3.13-slim
+# Use Python 3.11 slim image for better performance and smaller size
+FROM python:3.11-slim
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Create a non-root user for security
+RUN groupadd -r mcpuser && useradd -r -g mcpuser mcpuser
+
+# Set work directory
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/root/.local/bin:${PATH}"
+# Copy requirements first for better layer caching
+COPY requirements.txt .
 
-COPY pyproject.toml uv.lock ./
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN uv sync --frozen
+# Copy the application files
+COPY defillama_mcp_server.py .
+COPY pyproject.toml .
 
+# Copy additional files
 COPY . .
 
-EXPOSE 8090
-CMD ["uv", "run", "python", "smithery_server.py"]
+# Change ownership to non-root user
+RUN chown -R mcpuser:mcpuser /app
+
+# Switch to non-root user
+USER mcpuser
+
+# Expose the default port (if the server uses one)
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import httpx; print('Health check passed')" || exit 1
+
+# Default command to run the MCP server
+CMD ["python", "defillama_mcp_server.py"]

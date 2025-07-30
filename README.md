@@ -1,261 +1,367 @@
-# DeFiLlama MCP
+# DefiLlama MCP Server - Comprehensive Edition
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/llama-community/defillama-assets/main/defillama-logo.png" alt="DeFiLlama MCP Logo" width="200" height="auto"/>
-</p>
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
-[![Docker](https://img.shields.io/badge/docker-supported-blue.svg)](https://www.docker.com/)
-
-## Overview
-
-DeFiLlama MCP is a powerful and flexible tool that provides a microservice-based API wrapper around the DeFi Llama ecosystem. It leverages the FastMCP framework to transform DeFi Llama's comprehensive DeFi data into easily accessible tool endpoints that can be integrated with various AI applications, including LLM agents and autonomous systems.
-
-This project serves as a bridge between the rich data sources provided by DeFi Llama and the emerging needs of AI-driven applications in the Web3 space. By wrapping DeFi Llama's APIs in a standardized MCP (Microservice Communication Protocol) format, developers can quickly integrate real-time DeFi data into their AI systems without dealing with the complexities of direct API integration.
+A Model Context Protocol (MCP) server that provides complete access to DefiLlama's DeFi data APIs, enabling AI agents to perform sophisticated DeFi analysis, yield optimization, and market intelligence.
 
 ## Features
 
-- **Protocol Data Access**: Retrieve comprehensive information about DeFi protocols including TVL (Total Value Locked) metrics.
-- **Blockchain Analytics**: Access historical TVL data for specific blockchains to analyze trends and growth patterns.
-- **Token Price Tracking**: Fetch current price information for various tokens across multiple chains.
-- **Liquidity Pool Data**: Get detailed insights into liquidity pools, including TVL and other critical metrics.
-- **Standardized Interface**: All data is accessible through a consistent API pattern, making it easy to integrate with AI systems.
-- **Docker Support**: Ready-to-deploy containerization for easy implementation in any environment.
-- **Server-Sent Events**: Real-time data updates using SSE transport mechanism.
+### 🚀 Core Capabilities
+- **Complete API Coverage**: Access to all major DefiLlama endpoints
+- **Advanced Filtering**: Comprehensive filtering and sorting for all data types
+- **AI-Optimized**: Response formats designed for AI agent consumption
+- **Intelligent Caching**: Built-in caching for improved performance
+- **Type Safety**: Full type annotations for better development experience
+- **Error Handling**: Robust error handling with descriptive messages
 
-## Architecture
+### 📊 Available Tools
 
-DeFiLlama MCP is built using a modular architecture that separates the data-fetching logic from the API interface. The core components include:
+#### Protocol Analysis
+- `get_protocols` - List all DeFi protocols with advanced filtering
+- `get_protocol_details` - Detailed protocol information and metrics
+- `get_protocol_tvl` - Protocol TVL data
+- `analyze_protocol_performance` - Compare multiple protocols
 
-1. **API Clients**: Specialized HTTP clients for each of DeFi Llama's API endpoints (Main, Coins, Yields).
-2. **MCP Tools**: Function-based tools that transform raw API responses into structured data for consumption by AI agents.
-3. **FastMCP Server**: A lightweight server that exposes the tools via HTTP and SSE (Server-Sent Events).
-4. **Error Handling**: Robust error management to ensure reliability even when upstream services experience issues.
+#### Chain Analytics
+- `get_chains` - List all supported blockchains with TVL data
+- `get_chain_tvl_history` - Historical TVL data for specific chains
+- `get_all_chains_tvl` - Total DeFi TVL across all chains
+
+#### Price Intelligence
+- `get_current_prices` - Current token prices with metadata
+- `get_historical_prices` - Historical price data for specific timestamps
+- `get_batch_historical_prices` - Batch historical data for multiple tokens
+- `get_price_chart` - Price chart data with statistical analysis
+- `get_price_percentage_changes` - Price change percentages over time periods
+- `get_first_prices` - First recorded prices for tokens
+- `get_block_info` - Block information for chains and timestamps
+
+#### Yield Farming
+- `get_yield_pools` - Comprehensive yield pool data with filtering
+- `get_pool_chart` - Historical pool performance metrics
+- `optimize_yield_strategy` - AI-powered yield optimization
+
+#### Stablecoin Analysis
+- `get_stablecoins` - Stablecoin market data and peg stability
+- `get_stablecoin_charts` - Circulation charts and trends
+- `get_stablecoin_chains` - Supported chains for stablecoins
+- `get_stablecoin_prices` - Current stablecoin prices with deviation analysis
+
+#### DEX Intelligence
+- `get_dex_overview` - DEX volume overview across all chains
+- `get_dex_chain_overview` - Chain-specific DEX data
+- `get_dex_protocol_summary` - Protocol DEX summary
+
+#### Advanced Analytics
+- `find_arbitrage_opportunities` - Cross-chain arbitrage scanner
+- `get_options_overview` - Options trading data
+- `get_fees_overview` - Protocol fees analysis
 
 ## Installation
 
-### Prerequisites
-
-- Python 3.13 or higher
-- [uv](https://github.com/astral-sh/uv) (Python package installer and environment manager)
-
-### Option 1: Local Installation
-
+1. Install dependencies:
 ```bash
-# Clone the repository
-git clone https://github.com/demcp/defillama-mcp.git
-cd defillama-mcp
-
-# Create a virtual environment and install dependencies
-uv venv
-uv pip install -e .
-
-# Run the server
-uv run defillama.py
+pip install -r requirements.txt
 ```
 
-### Option 2: Docker Installation
-
+2. Run the server:
 ```bash
-# Clone the repository
-git clone https://github.com/demcp/defillama-mcp.git
-cd defillama-mcp
-
-# Build the Docker image
-docker build -t defillama-mcp .
-
-# Run the container
-docker run -p 8090:8090 defillama-mcp
+python defillama_mcp_server.py
 ```
 
-## Usage
+## Configuration
 
-Once the server is running, it exposes several endpoints that can be used to interact with DeFi Llama data:
+### Claude Desktop Integration
 
-### Available Tools
+Add to your `claude_desktop_config.json`:
 
-- `get_protocols`: Retrieve information about top DeFi protocols.
-- `get_protocol_tvl`: Get TVL data for a specific protocol.
-- `get_chain_tvl`: Access historical TVL data for a specific blockchain.
-- `get_token_prices`: Obtain current price information for specific tokens.
-- `get_pools`: List available liquidity pools.
-- `get_pool_tvl`: Get detailed information about a specific liquidity pool.
-
-### Example: Using with Python
-
-```python
-import httpx
-
-# Query the MCP server for protocol data
-async def get_protocol_data(protocol_name: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "http://localhost:8090/tools/get_protocol_tvl",
-            json={"protocol": protocol_name}
-        )
-        return response.json()
-
-# Usage
-import asyncio
-result = asyncio.run(get_protocol_data("aave"))
-print(result)
-```
-
-### Example: Using with LangChain
-
-```python
-from langchain.agents import load_tools
-from langchain.agents import initialize_agent
-from langchain.llms import OpenAI
-
-# Load DeFiLlama MCP tools
-tools = load_tools(["defillama-mcp"], base_url="http://localhost:8090")
-
-# Initialize an agent with the tools
-llm = OpenAI(temperature=0)
-agent = initialize_agent(tools, llm, agent="zero-shot-react-description", verbose=True)
-
-# Run the agent
-agent.run("What is the current TVL of Uniswap?")
-```
-
-### Example: Using with Autonomous Agents
-
-```python
-from autogen import Agent, ConversableAgent
-
-financial_analyst = ConversableAgent(
-    name="FinancialAnalyst",
-    llm_config={
-        "tools": [
-            {
-                "name": "defillama_protocol_tvl",
-                "url": "http://localhost:8090/tools/get_protocol_tvl"
-            }
-        ]
+```json
+{
+  "mcpServers": {
+    "defillama-comprehensive": {
+      "command": "python",
+      "args": ["/path/to/defillama/defillama_mcp_server.py"],
+      "env": {}
     }
+  }
+}
+```
+
+### Environment Variables
+
+The server supports optional environment configuration:
+- `DEFILLAMA_CACHE_TTL` - Cache TTL in seconds (default: 300)
+- `DEFILLAMA_REQUEST_DELAY` - Rate limiting delay (default: 0.1)
+- `DEFILLAMA_TIMEOUT` - Request timeout (default: 30)
+
+## Usage Examples
+
+### Protocol Analysis
+
+```python
+# Get top protocols by TVL
+get_protocols(sort_by="tvl", limit=10, min_tvl=100000000)
+
+# Compare specific protocols
+analyze_protocol_performance("uniswap,aave,compound", metrics="tvl,volume,fees")
+
+# Get detailed protocol information
+get_protocol_details("uniswap")
+```
+
+### Yield Optimization
+
+```python
+# Find yield opportunities with filters
+get_yield_pools(
+    min_apy=5.0,
+    min_tvl=1000000,
+    chains="ethereum,polygon,arbitrum",
+    sort_by="apy",
+    limit=20
 )
 
-# The agent can now access DeFi data during its reasoning process
-financial_analyst.initiate_chat("Analyze the TVL trends for Aave protocol")
+# AI-powered yield strategy optimization
+optimize_yield_strategy(
+    capital_usd=50000,
+    risk_tolerance="medium",
+    min_apy=8.0,
+    preferred_chains="ethereum,arbitrum"
+)
 ```
 
-## API Reference
+### Price Analysis
 
-### GET /protocols
+```python
+# Get current prices with metadata
+get_current_prices("ethereum:0xA0b86a33E6,coingecko:bitcoin")
 
-Returns a list of DeFi protocols tracked by DeFi Llama.
+# Historical price analysis
+get_historical_prices("2024-01-01", "WETH,USDC,WBTC")
 
-**Response:**
-```json
-[
-  {
-    "id": "ethereum:0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
-    "name": "Aave",
-    "symbol": "AAVE",
-    "chain": "Ethereum",
-    "tvl": 6240000000
-  },
-  ...
-]
+# Price charts with statistics
+get_price_chart("ethereum:0xA0b86a33E6", period="1d", span=100)
 ```
 
-### POST /tools/get_protocol_tvl
+### Chain Analysis
 
-Get TVL information for a specific protocol.
+```python
+# Get all chains with TVL data
+get_chains()
 
-**Request:**
-```json
-{
-  "protocol": "aave"
-}
+# Historical TVL for specific chain
+get_chain_tvl_history("ethereum")
+
+# Total DeFi TVL across all chains
+get_all_chains_tvl()
 ```
 
-**Response:**
-```json
-{
-  "ethereum": 3240000000,
-  "polygon": 980000000,
-  "avalanche": 570000000,
-  "optimism": 450000000,
-  "arbitrum": 1000000000,
-  "total": 6240000000
-}
+### Stablecoin Monitoring
+
+```python
+# Get stablecoin market overview
+get_stablecoins(sort_by="mcap", limit=20, include_prices=True)
+
+# Monitor stablecoin prices and peg stability
+get_stablecoin_prices()
+
+# Circulation trends
+get_stablecoin_charts(chain="ethereum")
 ```
 
-### POST /tools/get_chain_tvl
+## Advanced Filtering
 
-Get historical TVL data for a blockchain.
+All tools support comprehensive filtering options:
 
-**Request:**
-```json
-{
-  "chain": "ethereum"
-}
+### Common Filters
+- `sort_by` - Sort by any numeric field (tvl, apy, volume, price, etc.)
+- `ascending` - Sort order (default: False for descending)
+- `limit` - Maximum number of results
+- `min_*` / `max_*` - Range filters for numeric fields
+
+### Specific Filters
+- `chains` - Filter by blockchain networks
+- `protocols` - Filter by protocol names
+- `symbols` - Filter by token symbols
+- `categories` - Filter by protocol categories
+- `min_tvl` - Minimum TVL threshold
+- `min_apy` / `max_apy` - APY range filters
+
+## AI Integration
+
+### Prompts
+
+The server includes AI-optimized prompts:
+
+#### Portfolio Analysis
+```python
+analyze_defi_portfolio("WETH,USDC,AAVE,UNI", analysis_type="comprehensive")
 ```
 
-**Response:**
-```json
-[
-  {
-    "date": "2023-01-01",
-    "tvl": 28500000000
-  },
-  {
-    "date": "2023-01-02",
-    "tvl": 28700000000
-  },
-  ...
-]
+#### Yield Optimization
+```python
+find_yield_opportunities(
+    capital_usd=25000,
+    risk_level="medium",
+    min_apy=6.0,
+    chains="ethereum,polygon,arbitrum"
+)
+```
+
+### Response Formats
+
+All responses are formatted for optimal AI consumption:
+- Structured markdown output
+- Consistent formatting across tools
+- Rich metadata and context
+- Statistical summaries where relevant
+- Clear data hierarchies
+
+## Performance Features
+
+### Intelligent Caching
+- 5-minute default cache TTL
+- Automatic cache invalidation
+- Memory-efficient storage
+- Hit rate optimization
+
+### Rate Limiting
+- Built-in request delays
+- Respectful API usage
+- Automatic retry logic
+- Error recovery
+
+### Error Handling
+- Descriptive error messages
+- Graceful degradation
+- Input validation
+- API fallback handling
+
+## API Coverage
+
+The server provides access to all major DefiLlama APIs:
+
+### TVL APIs
+- `/protocols` - All protocol data
+- `/protocol/{protocol}` - Specific protocol details
+- `/tvl/{protocol}` - Protocol TVL
+- `/v2/chains` - Chain data
+- `/v2/historicalChainTvl` - Historical chain TVL
+
+### Price APIs
+- `/prices/current/{coins}` - Current prices
+- `/prices/historical/{timestamp}/{coins}` - Historical prices
+- `/batchHistorical` - Batch historical data
+- `/chart/{coins}` - Price charts
+- `/percentage/{coins}` - Price changes
+- `/prices/first/{coins}` - First prices
+
+### Yield APIs
+- `/pools` - All yield pools
+- `/chart/{pool}` - Pool historical data
+
+### Stablecoin APIs
+- `/stablecoins` - Stablecoin data
+- `/stablecoincharts/all` - All stablecoin charts
+- `/stablecoincharts/{chain}` - Chain-specific charts
+- `/stablecoin/{asset}` - Specific stablecoin
+- `/stablecoinprices` - Current prices
+
+### DEX APIs
+- `/overview/dexs` - DEX overview
+- `/overview/dexs/{chain}` - Chain DEX data
+- `/summary/dexs/{protocol}` - Protocol summary
+
+### Additional APIs
+- `/overview/options` - Options data
+- `/overview/fees` - Fee data
+- `/block/{chain}/{timestamp}` - Block info
+
+## Development
+
+### Project Structure
+```
+defillama/
+├── defillama_mcp_server.py    # Main server implementation
+├── requirements.txt           # Python dependencies
+├── README.md                 # Documentation
+├── ProjectSpec.md            # Product requirements
+└── APISpec.json             # API specification
+```
+
+### Code Organization
+- **Base Infrastructure**: HTTP client, caching, error handling
+- **Data Processing**: Formatting, filtering, sorting utilities
+- **Tool Categories**: Protocol, Price, Chain, Yield, Stablecoin, DEX
+- **Advanced Analytics**: AI-powered analysis tools
+- **Resources & Prompts**: AI integration helpers
+
+### Type Safety
+Full type annotations for:
+- Function parameters and return types
+- API response structures
+- Internal data structures
+- Error handling
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Import Errors**: Ensure all dependencies are installed
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **API Rate Limits**: The server includes built-in rate limiting
+   - Adjust `REQUEST_DELAY` if needed
+   - Check API status at status.defillama.com
+
+3. **Cache Issues**: Clear cache if data seems stale
+   - Restart the server to clear memory cache
+   - Adjust `CACHE_TTL` for different caching behavior
+
+4. **Network Errors**: Check internet connectivity
+   - The server includes automatic retry logic
+   - Error messages include specific failure details
+
+### Debugging
+
+Enable debug logging:
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
 ```
 
 ## Contributing
 
-Contributions are welcome! Here's how you can help improve DeFiLlama MCP:
-
-1. **Fork the Repository**: Create your own fork of the project.
-2. **Create a Feature Branch**: `git checkout -b feature/amazing-feature`
-3. **Commit Your Changes**: `git commit -m 'Add some amazing feature'`
-4. **Push to the Branch**: `git push origin feature/amazing-feature`
-5. **Open a Pull Request**: Submit your changes for review.
-
-### Development Guidelines
-
-- Follow PEP 8 style guidelines for Python code.
-- Write tests for new features.
-- Update documentation to reflect changes.
-- Ensure backward compatibility when possible.
+1. Follow the existing code structure
+2. Add type annotations for all new functions
+3. Include comprehensive error handling
+4. Update documentation for new features
+5. Test with various filter combinations
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is released under the MIT License. See the LICENSE file for details.
 
-## Acknowledgments
+## Support
 
-- [DeFi Llama](https://defillama.com/) for providing the comprehensive DeFi data APIs.
-- The [FastMCP](https://github.com/mcpai/fastmcp) team for creating the microservice framework.
-- All contributors who have helped shape this project.
+For issues and questions:
+1. Check the troubleshooting section
+2. Review the API documentation
+3. Test with simpler queries first
+4. Check DefiLlama API status
 
-## Roadmap
+## Changelog
 
-- [ ] Add support for more DeFi Llama endpoints
-- [ ] Implement caching layer for improved performance
-- [ ] Develop authentication and rate limiting
-- [ ] Create detailed documentation site
-- [ ] Build example integrations with popular AI frameworks
-- [ ] Add metric collection and monitoring
+### v2.0.0 - Comprehensive Edition
+- Complete API coverage for all DefiLlama endpoints
+- Advanced filtering and sorting for all tools
+- AI-optimized response formats
+- Intelligent caching system
+- Enhanced error handling
+- Type safety improvements
+- Performance optimizations
 
-## Contact
-
-For questions, suggestions, or discussions about this project, please open an issue on GitHub or contact the maintainers:
-
-- GitHub Issues: [https://github.com/demcp/defillama-mcp/issues](https://github.com/demcp/defillama-mcp/issues)
-
----
-
-<p align="center">Built with ❤️ for the Web3 and AI communities</p>
-
-```shell
-uv run defillama.py
-```
+### v1.0.0 - Initial Release
+- Basic protocol and price tools
+- Simple yield pool access
+- Basic error handling

@@ -1,10 +1,174 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "defillama-mcp"
-version = "0.1.0"
-description = "Add your description here"
+name = "defillama-mcp-server"
+version = "1.0.0"
+description = "Model Context Protocol server for DefiLlama DeFi data APIs"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "bhanusanghi", email = "bhanussanghi@gmail.com"}
+]
+maintainers = [
+    {name = "bhanusanghi", email = "bhanussanghi@gmail.com"}
+]
+keywords = [
+    "defi",
+    "llama",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "blockchain",
+    "cryptocurrency",
+    "yield-farming",
+    "anthropic",
+    "claude"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
 dependencies = [
-    "httpx>=0.28.1",
-    "mcp[cli]>=1.6.0",
+    "mcp[cli]>=1.0.0",
+    "httpx>=0.24.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.12.0",
+    "pre-commit>=3.0.0"
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "pytest-cov>=4.0.0",
+    "coverage>=7.0.0"
+]
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "myst-parser>=1.0.0"
+]
+
+[project.scripts]
+defillama-mcp = "defillama_mcp_server:main"
+
+[project.urls]
+Homepage = "https://github.com/bhanusanghi/Defillama-mcp"
+Documentation = "https://github.com/bhanusanghi/Defillama-mcp#readme"
+Repository = "https://github.com/bhanusanghi/Defillama-mcp"
+"Bug Tracker" = "https://github.com/bhanusanghi/Defillama-mcp/issues"
+Changelog = "https://github.com/bhanusanghi/Defillama-mcp/blob/main/CHANGELOG.md"
+"DefiLlama" = "https://defillama.com/"
+"MCP Protocol" = "https://modelcontextprotocol.io/"
+
+[tool.setuptools]
+py-modules = ["defillama_mcp_server"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["defillama_mcp_server"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
+
+[tool.coverage.run]
+source = ["defillama_mcp_server"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "setup.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "E501", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    ".tox"
 ]

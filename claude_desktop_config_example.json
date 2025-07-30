@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "defillama": {
+      "command": "python",
+      "args": ["/absolute/path/to/defillama_mcp_server.py"],
+      "env": {
+        "DEFILLAMA_DEBUG": "false"
+      }
+    }
+  }
+}
