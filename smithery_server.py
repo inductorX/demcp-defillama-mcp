@@ -45,60 +45,78 @@ async def mcp_endpoint(request: Request):
             })
         
         elif body.get("method") == "tools/list":
-            # Get the tools from the MCP server
-            tools = []
-            for tool_name, tool_func in mcp._tools.items():
-                tools.append({
-                    "name": tool_name,
-                    "description": tool_func.description or f"Tool: {tool_name}",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
+            # Get the tools from the MCP server using the proper API
+            try:
+                tools_list = await mcp.list_tools()
+                # Convert Tool objects to dictionaries
+                tools = [tool.model_dump() for tool in tools_list]
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": {"tools": tools}
+                })
+            except Exception as e:
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to list tools: {str(e)}"
                     }
                 })
-            
-            return JSONResponse({
-                "jsonrpc": "2.0",
-                "id": body.get("id"),
-                "result": {"tools": tools}
-            })
         
         elif body.get("method") == "tools/call":
             tool_name = body.get("params", {}).get("name")
             tool_args = body.get("params", {}).get("arguments", {})
             
-            if tool_name in mcp._tools:
-                try:
-                    result = await mcp._tools[tool_name](**tool_args)
-                    return JSONResponse({
-                        "jsonrpc": "2.0",
-                        "id": body.get("id"),
-                        "result": {
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": json.dumps(result, indent=2)
-                                }
-                            ]
-                        }
-                    })
-                except Exception as e:
-                    return JSONResponse({
-                        "jsonrpc": "2.0",
-                        "id": body.get("id"),
-                        "error": {
-                            "code": -32603,
-                            "message": f"Tool execution failed: {str(e)}"
-                        }
-                    })
-            else:
+            try:
+                # Use the proper FastMCP call_tool method
+                result = await mcp.call_tool(tool_name, tool_args)
+                
+                # Handle the result properly - call_tool returns a CallToolResult with content
+                if hasattr(result, 'content') and result.content:
+                    # It's a CallToolResult with content
+                    content_items = []
+                    for item in result.content:
+                        if hasattr(item, 'text'):
+                            # It's a TextContent
+                            content_items.append({
+                                "type": "text",
+                                "text": item.text
+                            })
+                        else:
+                            # Convert to string
+                            content_items.append({
+                                "type": "text", 
+                                "text": str(item)
+                            })
+                    result_data = {"content": content_items}
+                elif hasattr(result, 'model_dump'):
+                    # It's a pydantic model
+                    result_data = result.model_dump()
+                else:
+                    # It's something else, convert to text
+                    result_data = {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": str(result)
+                            }
+                        ]
+                    }
+                
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": result_data
+                })
+            except Exception as e:
                 return JSONResponse({
                     "jsonrpc": "2.0",
                     "id": body.get("id"),
                     "error": {
-                        "code": -32601,
-                        "message": f"Tool not found: {tool_name}"
+                        "code": -32603,
+                        "message": f"Tool execution failed: {str(e)}"
                     }
                 })
         
