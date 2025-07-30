@@ -205,6 +205,133 @@ app = FastAPI(title="DeFi Llama MCP Server")
 # Store active MCP sessions
 sessions: Dict[str, Any] = {}
 
+@app.get("/")
+async def root():
+    """Root endpoint for basic connectivity check"""
+    return {"status": "ok", "server": "defillama_mcp", "version": "1.0.0"}
+
+@app.get("/sse")
+async def sse_endpoint(request: Request):
+    """SSE endpoint for MCP connection"""
+    print(f"🔍 SSE Request: {request.method} {request.url}")
+    print(f"🔍 Headers: {dict(request.headers)}")
+    
+    # Return server capabilities for SSE-based tool discovery
+    return JSONResponse({
+        "jsonrpc": "2.0",
+        "id": "sse-discovery",
+        "result": {
+            "capabilities": {
+                "tools": {"listChanged": False},
+                "resources": {"listChanged": False},
+                "prompts": {"listChanged": False}
+            },
+            "serverInfo": {
+                "name": "defillama_mcp",
+                "version": "1.0.0"
+            },
+            "tools": STATIC_TOOLS
+        }
+    })
+
+@app.post("/messages")
+async def messages_endpoint(request: Request):
+    """Messages endpoint for MCP JSON-RPC over HTTP"""
+    print(f"🔍 Messages Request: {request.method} {request.url}")
+    print(f"🔍 Headers: {dict(request.headers)}")
+    
+    try:
+        body = await request.json()
+        print(f"🔍 Request body: {body}")
+    except:
+        body = {}
+        print("🔍 Failed to parse request body")
+    
+    if body.get("method") == "initialize":
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {
+                    "tools": {"listChanged": False},
+                    "resources": {"listChanged": False},
+                    "prompts": {"listChanged": False}
+                },
+                "serverInfo": {
+                    "name": "defillama_mcp",
+                    "version": "1.0.0"
+                }
+            }
+        })
+    
+    elif body.get("method") == "tools/list":
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {"tools": STATIC_TOOLS}
+        })
+    
+    elif body.get("method") == "tools/call":
+        tool_name = body.get("params", {}).get("name")
+        tool_args = body.get("params", {}).get("arguments", {})
+        
+        try:
+            result = await mcp.call_tool(tool_name, tool_args)
+            
+            # Handle the result properly
+            if hasattr(result, 'content') and result.content:
+                content_items = []
+                for item in result.content:
+                    if hasattr(item, 'text'):
+                        content_items.append({
+                            "type": "text",
+                            "text": item.text
+                        })
+                    else:
+                        content_items.append({
+                            "type": "text", 
+                            "text": str(item)
+                        })
+                result_data = {"content": content_items}
+            elif hasattr(result, 'model_dump'):
+                result_data = result.model_dump()
+            else:
+                result_data = {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": str(result)
+                        }
+                    ]
+                }
+            
+            return JSONResponse({
+                "jsonrpc": "2.0",
+                "id": body.get("id"),
+                "result": result_data
+            })
+        except Exception as e:
+            print(f"🔍 Tool execution error: {str(e)}")
+            return JSONResponse({
+                "jsonrpc": "2.0",
+                "id": body.get("id"),
+                "error": {
+                    "code": -32603,
+                    "message": f"Tool execution failed: {str(e)}"
+                }
+            })
+    
+    else:
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "error": {
+                "code": -32601,
+                "message": f"Method not found: {body.get('method')}"
+            }
+        })
+
 @app.get("/mcp")
 @app.post("/mcp") 
 @app.delete("/mcp")
@@ -213,6 +340,10 @@ async def mcp_endpoint(request: Request):
     Streamable HTTP endpoint for MCP protocol as required by Smithery.
     Handles GET, POST, and DELETE methods with configuration via query parameters.
     """
+    print(f"🔍 MCP Request: {request.method} {request.url}")
+    print(f"🔍 Headers: {dict(request.headers)}")
+    print(f"🔍 Query params: {dict(request.query_params)}")
+    
     try:
         # Parse configuration from query parameters (Smithery uses dot-notation)
         query_params = dict(request.query_params)
@@ -367,6 +498,26 @@ async def mcp_endpoint(request: Request):
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "server": "defillama_mcp"}
+
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def catch_all(request: Request, path: str):
+    """Catch-all endpoint to log unknown requests"""
+    print(f"⚠️  Unknown endpoint: {request.method} /{path}")
+    print(f"⚠️  Headers: {dict(request.headers)}")
+    print(f"⚠️  Query params: {dict(request.query_params)}")
+    if request.method == "POST":
+        try:
+            body = await request.json()
+            print(f"⚠️  Body: {body}")
+        except:
+            body_bytes = await request.body()
+            print(f"⚠️  Raw body: {body_bytes}")
+    
+    return JSONResponse({
+        "error": f"Endpoint /{path} not found",
+        "method": request.method,
+        "available_endpoints": ["/", "/mcp", "/health"]
+    }, status_code=404)
 
 if __name__ == "__main__":
     HOST = os.getenv("HOST", "0.0.0.0")
