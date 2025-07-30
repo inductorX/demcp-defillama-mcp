@@ -12,7 +12,19 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 import uvicorn
-from defillama import mcp
+# Import MCP module but don't initialize it immediately
+import defillama
+
+# Global variable to hold MCP instance when needed
+_mcp_instance = None
+
+async def get_mcp():
+    """Lazy initialization of MCP instance"""
+    global _mcp_instance
+    if _mcp_instance is None:
+        print("🔧 Initializing MCP instance for tool execution...")
+        _mcp_instance = defillama.mcp
+    return _mcp_instance
 
 # Static tool definitions for lazy loading without full MCP initialization
 STATIC_TOOLS = [
@@ -277,7 +289,8 @@ async def messages_endpoint(request: Request):
         tool_args = body.get("params", {}).get("arguments", {})
         
         try:
-            result = await mcp.call_tool(tool_name, tool_args)
+            mcp_instance = await get_mcp()
+            result = await mcp_instance.call_tool(tool_name, tool_args)
             
             # Handle the result properly
             if hasattr(result, 'content') and result.content:
@@ -412,7 +425,8 @@ async def mcp_endpoint(request: Request):
                 tool_args = body.get("params", {}).get("arguments", {})
                 
                 try:
-                    result = await mcp.call_tool(tool_name, tool_args)
+                    mcp_instance = await get_mcp()
+                    result = await mcp_instance.call_tool(tool_name, tool_args)
                     
                     # Handle the result properly
                     if hasattr(result, 'content') and result.content:
@@ -525,7 +539,8 @@ if __name__ == "__main__":
     
     print("🚀 Starting DeFi Llama MCP Server for Smithery...")
     print(f"📡 Server will be available at http://{HOST}:{PORT}")
-    print("🔧 Smithery endpoint: /mcp")
-    print("💰 Available tools: 14 DeFi functions")
+    print("🔧 Endpoints: /, /sse, /messages, /mcp, /health")
+    print("💰 Available tools: 14 DeFi functions (lazy-loaded)")
+    print("⚡ Fast tool discovery - no initialization required")
     
     uvicorn.run(app, host=HOST, port=PORT)
