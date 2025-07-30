@@ -15,4 +15,4 @@ RUN uv sync --frozen
 COPY . .
 
 EXPOSE 8090
-CMD ["uv", "run", "defillama.py"]
+CMD ["uv", "run", "python", "defillama.py"]

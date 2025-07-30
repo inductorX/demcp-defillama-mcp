@@ -5,10 +5,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 # Initialize Defillama mcp server
-# Use environment variables for host and port configuration
-HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", "8090"))
-mcp = FastMCP("defillama_mcp", host=HOST, port=PORT)
+mcp = FastMCP("defillama_mcp")
 
 # Constants
 DEFI_API_BASE = "https://api.llama.fi"
