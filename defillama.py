@@ -4,12 +4,9 @@ import json
 import os
 from mcp.server.fastmcp import FastMCP
 
-# Initialize Defillama mcp sse server
-# Use environment variables for host and port configuration
-# PORT is the standard environment variable used by cloud platforms
-HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", "8080"))
-mcp = FastMCP("defillama-mcp", host=HOST, port=PORT)
+# Initialize Defillama mcp server
+# For stdio transport, no host/port configuration is needed
+mcp = FastMCP("defillama-mcp")
 
 # Constants
 DEFI_API_BASE = "https://api.llama.fi"
