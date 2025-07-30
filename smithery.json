@@ -1,0 +1,93 @@
+{
+  "name": "defillama-mcp-server",
+  "version": "1.0.0",
+  "description": "DefiLlama MCP Server - Comprehensive access to DeFi data APIs",
+  "keywords": ["defi", "llama", "mcp", "defi-data", "yield-farming", "tvl", "prices"],
+  "author": "bhanusanghi",
+  "license": "MIT",
+  "repository": "https://github.com/bhanusanghi/Defillama-mcp",
+  "documentation": "https://github.com/bhanusanghi/Defillama-mcp#readme",
+  "runtime": "python",
+  "python_version": ">=3.8",
+  "entry_point": "defillama_mcp_server.py",
+  "dependencies": {
+    "mcp[cli]": ">=1.0.0",
+    "httpx": ">=0.24.0",
+    "pandas": ">=2.0.0",
+    "numpy": ">=1.24.0",
+    "python-dateutil": ">=2.8.0"
+  },
+  "environment_variables": {
+    "DEFILLAMA_CACHE_TTL": {
+      "description": "Cache TTL in seconds",
+      "default": "300",
+      "type": "integer"
+    },
+    "DEFILLAMA_REQUEST_DELAY": {
+      "description": "Rate limiting delay in seconds",
+      "default": "0.1",
+      "type": "float"
+    },
+    "DEFILLAMA_TIMEOUT": {
+      "description": "Request timeout in seconds",
+      "default": "30",
+      "type": "integer"
+    }
+  },
+  "features": [
+    "Protocol analysis and comparison",
+    "Token price tracking (current, historical, charts)",
+    "Chain TVL analysis",
+    "Yield farming optimization",
+    "Stablecoin monitoring",
+    "DEX volume and performance analysis",
+    "Portfolio optimization",
+    "Risk assessment"
+  ],
+  "tools": [
+    {
+      "name": "get_protocols",
+      "description": "List all DeFi protocols with filtering and sorting"
+    },
+    {
+      "name": "get_protocol_details",
+      "description": "Detailed protocol information and metrics"
+    },
+    {
+      "name": "get_current_prices",
+      "description": "Current token prices with metadata"
+    },
+    {
+      "name": "get_yield_pools",
+      "description": "Comprehensive yield pool data with filtering"
+    },
+    {
+      "name": "optimize_yield_strategy",
+      "description": "AI-powered yield optimization"
+    },
+    {
+      "name": "get_stablecoins",
+      "description": "Stablecoin market data and peg stability"
+    },
+    {
+      "name": "get_dex_overview",
+      "description": "DEX volume overview across all chains"
+    },
+    {
+      "name": "analyze_protocol_performance",
+      "description": "Compare multiple protocols across various metrics"
+    }
+  ],
+  "deployment": {
+    "docker": {
+      "enabled": true,
+      "dockerfile": "Dockerfile",
+      "port": 8000,
+      "health_check": "/health"
+    },
+    "resources": {
+      "memory": "512Mi",
+      "cpu": "0.5"
+    }
+  }
+}

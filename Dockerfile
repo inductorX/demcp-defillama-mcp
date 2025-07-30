@@ -27,9 +27,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application files
 COPY defillama_mcp_server.py .
 COPY pyproject.toml .
+COPY entrypoint.sh .
 
 # Copy additional files
 COPY . .
+
+# Make entrypoint script executable
+RUN chmod +x entrypoint.sh
 
 # Change ownership to non-root user
 RUN chown -R mcpuser:mcpuser /app
@@ -45,4 +49,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import httpx; print('Health check passed')" || exit 1
 
 # Default command to run the MCP server
-CMD ["python", "defillama_mcp_server.py"]
+ENTRYPOINT ["./entrypoint.sh"]

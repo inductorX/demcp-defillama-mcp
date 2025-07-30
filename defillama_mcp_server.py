@@ -2316,16 +2316,26 @@ def main():
     
     logger.info("Starting DefiLlama Comprehensive MCP Server...")
     
-    try:
-        # Run the server - it manages its own event loop
-        mcp.run()
-    except KeyboardInterrupt:
-        logger.info("Server stopped by user")
-    except Exception as e:
-        logger.error(f"Server error: {e}")
-        raise
-    finally:
-        logger.info("DefiLlama Comprehensive MCP Server stopped")
+    # Keep server running indefinitely
+    while True:
+        try:
+            # Run the server - it manages its own event loop
+            mcp.run()
+        except KeyboardInterrupt:
+            logger.info("Server stopped by user")
+            break
+        except Exception as e:
+            logger.error(f"Server error: {e}")
+            logger.info("Restarting server in 5 seconds...")
+            try:
+                import time
+                time.sleep(5)  # Wait 5 seconds before restart
+                continue  # Restart the loop
+            except KeyboardInterrupt:
+                logger.info("Server stopped by user during restart")
+                break
+    
+    logger.info("DefiLlama Comprehensive MCP Server stopped")
 
 
 if __name__ == "__main__":
