@@ -57,6 +57,8 @@ A Model Context Protocol (MCP) server that provides complete access to DefiLlama
 
 ## Installation
 
+### Local Installation
+
 1. Install dependencies:
 ```bash
 pip install -r requirements.txt
@@ -65,6 +67,31 @@ pip install -r requirements.txt
 2. Run the server:
 ```bash
 python defillama_mcp_server.py
+```
+
+### Docker Installation
+
+1. Build and run with Docker:
+```bash
+docker build -t defillama-mcp .
+docker run -d -p 8000:8000 defillama-mcp
+```
+
+2. Or use docker-compose:
+```bash
+docker-compose up -d
+```
+
+### Smithery Deployment
+
+1. Push your code to GitHub including `smithery.yaml`
+2. Connect your GitHub to Smithery 
+3. Navigate to Deployments tab
+4. Click Deploy to build and host
+
+Or use the deploy script:
+```bash
+./deploy.sh production
 ```
 
 ## Configuration

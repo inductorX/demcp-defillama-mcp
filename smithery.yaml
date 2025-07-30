@@ -1,0 +1,25 @@
+runtime: "container"
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+startCommand:
+  type: "http"
+  configSchema:
+    type: "object"
+    properties:
+      cache_ttl:
+        type: "integer"
+        description: "Cache TTL in seconds"
+        default: 300
+      request_delay:
+        type: "number"
+        description: "Rate limiting delay in seconds"
+        default: 0.1
+      timeout:
+        type: "integer"
+        description: "Request timeout in seconds"
+        default: 30
+  exampleConfig:
+    cache_ttl: 300
+    request_delay: 0.1
+    timeout: 30

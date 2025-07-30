@@ -41,10 +41,11 @@ import asyncio
 import atexit
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Union, Tuple, cast
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, parse_qs
 from functools import lru_cache
 import statistics
 
@@ -2316,6 +2317,17 @@ def main():
     
     logger.info("Starting DefiLlama Comprehensive MCP Server...")
     
+    # Check if running in HTTP mode (for Smithery)
+    port = os.environ.get('PORT')
+    if port:
+        logger.info(f"Running in HTTP mode on port {port}")
+        asyncio.run(run_http_server(int(port)))
+    else:
+        logger.info("Running in MCP protocol mode")
+        run_mcp_server()
+
+def run_mcp_server():
+    """Run the server in standard MCP protocol mode."""
     # Keep server running indefinitely
     while True:
         try:
@@ -2336,6 +2348,107 @@ def main():
                 break
     
     logger.info("DefiLlama Comprehensive MCP Server stopped")
+
+async def run_http_server(port: int):
+    """Run the server in HTTP mode for Smithery deployment."""
+    from starlette.applications import Starlette
+    from starlette.responses import JSONResponse, StreamingResponse
+    from starlette.routing import Route
+    from starlette.middleware.cors import CORSMiddleware
+    import uvicorn
+    
+    async def mcp_endpoint(request):
+        """Handle MCP requests over HTTP."""
+        try:
+            method = request.method
+            query_params = dict(request.query_params)
+            
+            if method == "GET":
+                # Return server capabilities
+                return JSONResponse({
+                    "capabilities": {
+                        "tools": {
+                            "listChanged": True
+                        },
+                        "resources": {
+                            "subscribe": True,
+                            "listChanged": True
+                        },
+                        "prompts": {
+                            "listChanged": True
+                        }
+                    },
+                    "protocolVersion": "2024-11-05",
+                    "serverInfo": {
+                        "name": "DefiLlama-Comprehensive",
+                        "version": "2.0.0"
+                    },
+                    "tools": [
+                        {"name": "get_protocols", "description": "List all DeFi protocols with filtering"},
+                        {"name": "get_current_prices", "description": "Current token prices"},
+                        {"name": "get_yield_pools", "description": "Yield farming pools"},
+                        {"name": "optimize_yield_strategy", "description": "AI-powered yield optimization"},
+                        {"name": "get_stablecoins", "description": "Stablecoin market data"},
+                        {"name": "get_dex_overview", "description": "DEX volume overview"}
+                    ]
+                })
+            
+            elif method == "POST":
+                # Handle MCP requests
+                body = await request.json()
+                
+                # This is a simplified handler - in production you'd implement full MCP protocol
+                return JSONResponse({
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "DefiLlama MCP Server is running. Connect via MCP protocol for full functionality."
+                            }
+                        ]
+                    }
+                })
+                
+        except Exception as e:
+            logger.error(f"HTTP endpoint error: {e}")
+            return JSONResponse(
+                {"error": str(e)}, 
+                status_code=500
+            )
+    
+    async def health_endpoint(request):
+        """Health check endpoint."""
+        return JSONResponse({"status": "healthy", "server": "DefiLlama MCP"})
+    
+    # Create Starlette app
+    app = Starlette(
+        routes=[
+            Route("/mcp", mcp_endpoint, methods=["GET", "POST", "DELETE"]),
+            Route("/health", health_endpoint, methods=["GET"]),
+            Route("/", health_endpoint, methods=["GET"])
+        ]
+    )
+    
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Run the server
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=port,
+        log_level="info"
+    )
+    server = uvicorn.Server(config)
+    await server.serve()
 
 
 if __name__ == "__main__":

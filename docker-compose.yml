@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: defillama-mcp-stable
     container_name: defillama-mcp-server
     restart: unless-stopped
     environment:
