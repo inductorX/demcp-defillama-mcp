@@ -26,7 +26,11 @@ TEST_TOOLS = [
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "server": "test_mcp"}
+    return {"status": "ok", "server": "test_mcp", "version": "1.0.0"}
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "server": "test_mcp"}
 
 @app.get("/mcp")
 async def mcp_get():
@@ -79,5 +83,14 @@ if __name__ == "__main__":
     
     print("🚀 Starting Test MCP Server...")
     print(f"📡 Server at http://{HOST}:{PORT}")
+    print("🔧 Available endpoints: /, /health, /mcp")
+    print("⚡ Ready for Smithery tool scanning")
     
-    uvicorn.run(app, host=HOST, port=PORT)
+    # Configure uvicorn for better startup
+    uvicorn.run(
+        app, 
+        host=HOST, 
+        port=PORT,
+        log_level="info",
+        access_log=True
+    )
