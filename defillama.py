@@ -5,6 +5,9 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 # Initialize Defillama mcp server
+# Use environment variables for host and port configuration for deployment platforms
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8090"))
 mcp = FastMCP("defillama_mcp")
 
 # Constants
@@ -324,4 +327,4 @@ async def make_request(url: str) -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    mcp.run(transport='sse')
+    mcp.run(transport='http', host=HOST, port=PORT)
