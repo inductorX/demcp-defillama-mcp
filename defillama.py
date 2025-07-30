@@ -24,7 +24,9 @@ async def get_protocols() -> dict[Any, Any]:
     """
     url = f"{DEFI_API_BASE}/protocols"
     data = await make_request(url)
-
+    
+    if data is None:
+        return {"error": "Failed to fetch protocols data"}
     return data[:20]
 
 @mcp.tool(
@@ -42,7 +44,10 @@ async def get_protocol_tvl(protocol: str) -> dict[Any, Any]:
     """
     url = f"{DEFI_API_BASE}/protocol/{protocol}"
     data = await make_request(url)
-    return data["currentChainTvls"]
+    
+    if data is None:
+        return {"error": f"Failed to fetch TVL data for protocol {protocol}"}
+    return data.get("currentChainTvls", {})
 
 @mcp.tool(
     description="Retrieve historical Total Value Locked (TVL) data for a specific blockchain"
@@ -59,6 +64,9 @@ async def get_chain_tvl(chain: str) -> dict[Any, Any]:
     """
     url = f"{DEFI_API_BASE}/v2/historicalChainTvl/{chain}"
     data = await make_request(url)
+    
+    if data is None:
+        return {"error": f"Failed to fetch TVL data for chain {chain}"}
     return data[:30]
 
 @mcp.tool(
@@ -75,6 +83,9 @@ async def get_token_prices(token: str) -> dict[Any, Any]:
     """
     url = f"{COIN_API_BASE}/prices/current/{token}"
     data = await make_request(url)
+    
+    if data is None:
+        return {"error": f"Failed to fetch price data for token {token}"}
     return data
 
 @mcp.tool(
@@ -85,9 +96,12 @@ async def get_pools() -> dict[str, Any]:
     """
     url = f"{YIELDS_API_BASE}/pools"
     data = await make_request(url)
+    
+    if data is None:
+        return {"error": "Failed to fetch pools data"}
     if isinstance(data, dict) and 'data' in data:
         return data['data'][:30]
-    return data[:30]
+    return data[:30] if isinstance(data, list) else {"error": "Unexpected data format"}
 
 
 @mcp.tool(
@@ -104,9 +118,12 @@ async def get_pool_tvl(pool: str) -> dict[str, Any]:
     """
     url = f"{YIELDS_API_BASE}/chart/{pool}"
     data = await make_request(url)
+    
+    if data is None:
+        return {"error": f"Failed to fetch TVL data for pool {pool}"}
     if isinstance(data, dict) and 'data' in data:
         return data['data'][:30]
-    return data[:30]
+    return data[:30] if isinstance(data, list) else {"error": "Unexpected data format"}
 
 
 async def make_request(url: str) -> dict[str, Any] | None:
