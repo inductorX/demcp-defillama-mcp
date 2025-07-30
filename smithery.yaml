@@ -1,0 +1,8 @@
+version: 1
+start:
+  command: ["uv", "run", "python", "defillama.py"]
+  port: 8090
+transport: sse
+endpoints:
+  sse: "/sse"
+  messages: "/messages"

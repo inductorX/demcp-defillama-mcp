@@ -5,8 +5,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 # Initialize Defillama mcp server  
-# Using SSE transport for Smithery's Streamable HTTP requirement
-# Smithery expects an HTTP server, not stdio transport
+# Use environment variables for host and port configuration for deployment platforms
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8090"))
 mcp = FastMCP("defillama_mcp", host=HOST, port=PORT)
@@ -328,6 +327,5 @@ async def make_request(url: str) -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    # Use SSE transport for Smithery's Streamable HTTP requirement
-    # This starts an HTTP server that Smithery can connect to
+    # Use SSE transport which provides streaming HTTP interface for Smithery
     mcp.run(transport='sse')
