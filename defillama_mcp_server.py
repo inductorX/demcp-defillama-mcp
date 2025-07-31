@@ -412,7 +412,7 @@ async def run_http_server(port: int):
                         "name": "DefiLlama-Comprehensive",
                         "version": "2.0.0"
                     }
-                })
+                }, headers={"Content-Type": "application/json"})
             
             elif method == "POST":
                 # Handle MCP protocol requests
@@ -526,7 +526,20 @@ async def run_http_server(port: int):
     
     async def health_endpoint(request):
         """Health check endpoint."""
-        return JSONResponse({"status": "healthy", "server": "DefiLlama MCP"})
+        return JSONResponse({
+            "status": "healthy", 
+            "server": "DefiLlama MCP",
+            "protocolVersion": "2024-11-05",
+            "capabilities": {
+                "tools": {"listChanged": True},
+                "resources": {"subscribe": True, "listChanged": True},
+                "prompts": {"listChanged": True}
+            },
+            "serverInfo": {
+                "name": "DefiLlama-Comprehensive",
+                "version": "2.0.0"
+            }
+        })
     
     # Create Starlette app
     app = Starlette(
