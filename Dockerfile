@@ -45,8 +45,8 @@ USER mcpuser
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; print('Health check passed')" || exit 1
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+#     CMD python -c "import httpx; print('Health check passed')" || exit 1
 
 # Default command to run the MCP server
 ENTRYPOINT ["./entrypoint.sh"]
