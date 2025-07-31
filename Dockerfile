@@ -25,7 +25,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application files
-COPY defillama_mcp_server.py .
+COPY defillama_mcp_server_fixed.py ./defillama_mcp_server.py
 COPY pyproject.toml .
 COPY entrypoint.sh .
 
