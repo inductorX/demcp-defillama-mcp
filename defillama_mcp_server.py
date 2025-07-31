@@ -400,8 +400,8 @@ async def run_http_server(port: int):
             query_params = dict(request.query_params)
             
             if method == "GET":
-                # For tool discovery - return minimal response for lazy loading
-                return JSONResponse({
+                # For tool discovery - return server info for Smithery lazy loading
+                response_data = {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {
                         "tools": {"listChanged": True},
@@ -411,8 +411,48 @@ async def run_http_server(port: int):
                     "serverInfo": {
                         "name": "DefiLlama-Comprehensive",
                         "version": "2.0.0"
-                    }
-                }, headers={"Content-Type": "application/json"})
+                    },
+                    "tools": [
+                        {
+                            "name": "get_protocols",
+                            "description": "Get list of all DeFi protocols with filtering and sorting",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "sort_by": {"type": "string", "default": "tvl"},
+                                    "ascending": {"type": "boolean", "default": False},
+                                    "limit": {"type": "integer"},
+                                    "min_tvl": {"type": "number"}
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_current_prices",
+                            "description": "Get current prices for specified tokens",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "coins": {"type": "string", "description": "Comma-separated list of coin identifiers"}
+                                },
+                                "required": ["coins"]
+                            }
+                        },
+                        {
+                            "name": "get_yield_pools",
+                            "description": "Get yield farming pools with filtering and sorting",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "sort_by": {"type": "string", "default": "apy"},
+                                    "ascending": {"type": "boolean", "default": False},
+                                    "limit": {"type": "integer", "default": 20},
+                                    "min_apy": {"type": "number"}
+                                }
+                            }
+                        }
+                    ]
+                }
+                return JSONResponse(response_data, headers={"Content-Type": "application/json"})
             
             elif method == "POST":
                 # Handle MCP protocol requests
