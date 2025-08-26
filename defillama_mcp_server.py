@@ -247,23 +247,17 @@ class DefiLlamaMCPServer:
                 return f"❌ Error fetching current prices: {str(e)}"
 
         @self.mcp.tool()
-        async def get_yield_pools(
-            sort_by: str = "apy",
-            ascending: bool = False,
-            limit: Optional[int] = 20,
-            min_apy: Optional[float] = None
-        ) -> str:
+        async def get_yield_pools(chain: str = None, project: str = None) -> List[Dict[str, Any]]:
             """
-            Get yield farming pools with filtering and sorting.
+            Fetch DeFi yield pools from the yields.llama.fi API, optionally filtering by chain or project.
+            Returns symbol, project, tvlUsd, apy, apyMean30d, and predictions for each pool.
             
             Args:
-                sort_by: Sort field (apy, tvl, volume)
-                ascending: Sort order (False for descending)
-                limit: Maximum number of results
-                min_apy: Minimum APY threshold
-                
+                chain: Optional filter for blockchain (e.g., 'Ethereum', 'Solana')
+                project: Optional filter for project name (e.g., 'lido', 'aave-v3')
+            
             Returns:
-                Formatted string with yield pool information
+                List of dictionaries containing pool information
             """
             try:
                 url = f"{DEFILLAMA_YIELDS_API}/pools"
@@ -275,57 +269,65 @@ class DefiLlamaMCPServer:
                 elif isinstance(data, list):
                     pools = data
                 else:
-                    return "❌ Invalid pools data format received"
+                    raise ValueError("Invalid pools data format received")
                 
                 if not isinstance(pools, list):
-                    return "❌ Expected list of pools but got different format"
+                    raise ValueError("Expected list of pools but got different format")
                 
-                # Apply filters
-                filtered_pools = pools
-                if min_apy:
-                    filtered_pools = [p for p in filtered_pools if isinstance(p, dict) and p.get('apy', 0) >= min_apy]
+                filtered_pools = []
                 
-                # Sort pools
-                if sort_by and filtered_pools:
-                    try:
-                        filtered_pools = sorted(
-                            filtered_pools,
-                            key=lambda x: x.get(sort_by, 0) if isinstance(x.get(sort_by), (int, float)) else 0,
-                            reverse=not ascending
-                        )
-                    except Exception:
-                        pass
-                
-                if limit:
-                    filtered_pools = filtered_pools[:limit]
-                
-                if not filtered_pools:
-                    return "No yield pools found matching the criteria."
-                
-                result_lines = [f"**Yield Farming Pools ({len(filtered_pools)} results)**\n"]
-                
-                for i, pool in enumerate(filtered_pools, 1):
+                for pool in pools:
                     if not isinstance(pool, dict):
                         continue
-                    project = pool.get("project", "Unknown")
-                    symbol = pool.get("symbol", "Unknown")
-                    apy = pool.get("apy", 0)
-                    tvl = pool.get("tvlUsd", 0)
-                    chain = pool.get("chain", "Unknown")
                     
-                    tvl_str = f"${self.format_number(tvl)}"
-                    apy_str = f"{apy:.2f}%" if isinstance(apy, (int, float)) else "N/A"
+                    # Extract required fields
+                    yield_pool = {
+                        "chain": pool.get("chain", ""),
+                        "pool": pool.get("symbol", ""),
+                        "project": pool.get("project", ""),
+                        "tvlUsd": pool.get("tvlUsd", 0.0),
+                        "apy": pool.get("apy", 0.0),
+                        "apyMean30d": pool.get("apyMean30d", 0.0),
+                        "predictions": pool.get("predictions", {})
+                    }
                     
-                    result_lines.append(
-                        f"{i:2d}. **{project}** - {symbol}\n"
-                        f"    📈 APY: {apy_str} | 💰 TVL: {tvl_str} | ⛓️ {chain}\n"
-                    )
+                    # Apply filters
+                    if chain and pool.get("chain", "").lower() != chain.lower():
+                        continue
+                    if project and yield_pool["project"].lower() != project.lower():
+                        continue
+                    
+                    filtered_pools.append(yield_pool)
                 
-                return "\n".join(result_lines)
+                logger.info(f"Returning {len(filtered_pools)} yield pools")
+                return filtered_pools
                 
             except Exception as e:
                 logger.error(f"Error fetching yield pools: {e}")
-                return f"❌ Error fetching yield pools: {str(e)}"
+                raise
+
+        @self.mcp.prompt()
+        def analyze_yields(chain: str = None, project: str = None) -> str:
+            """
+            Generate a prompt to analyze DeFi yield pools, optionally filtered by chain or project.
+            
+            Args:
+                chain: Optional blockchain filter
+                project: Optional project filter
+            
+            Returns:
+                Analysis prompt string
+            """
+            base_prompt = "Please analyze the following DeFi yield pools data, including symbol, project name, TVL (USD), APY (%), 30-day mean APY (%), and predictions."
+            
+            if chain and project:
+                return f"{base_prompt} Focus on pools from the '{project}' project on the '{chain}' chain."
+            elif chain:
+                return f"{base_prompt} Focus on pools on the '{chain}' chain."
+            elif project:
+                return f"{base_prompt} Focus on pools from the '{project}' project."
+            else:
+                return f"{base_prompt} Include all available pools."
 
     async def run_server(self):
         """Run the MCP server."""
@@ -395,9 +397,11 @@ async def run_http_server(port: int):
     
     async def mcp_endpoint(request):
         """Handle MCP requests over HTTP."""
+        logger.info(f"Received {request.method} request to /mcp")
         try:
             method = request.method
             query_params = dict(request.query_params)
+            logger.info(f"Query params: {query_params}")
             
             if method == "GET":
                 # For tool discovery - return server info for Smithery lazy loading
@@ -439,14 +443,12 @@ async def run_http_server(port: int):
                         },
                         {
                             "name": "get_yield_pools",
-                            "description": "Get yield farming pools with filtering and sorting",
+                            "description": "Fetch DeFi yield pools from the yields.llama.fi API, optionally filtering by chain or project",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
-                                    "sort_by": {"type": "string", "default": "apy"},
-                                    "ascending": {"type": "boolean", "default": False},
-                                    "limit": {"type": "integer", "default": 20},
-                                    "min_apy": {"type": "number"}
+                                    "chain": {"type": "string", "description": "Optional filter for blockchain (e.g., 'Ethereum', 'Solana')"},
+                                    "project": {"type": "string", "description": "Optional filter for project name (e.g., 'lido', 'aave-v3')"}
                                 }
                             }
                         }
@@ -493,14 +495,12 @@ async def run_http_server(port: int):
                                 },
                                 {
                                     "name": "get_yield_pools",
-                                    "description": "Get yield farming pools with filtering and sorting",
+                                    "description": "Fetch DeFi yield pools from the yields.llama.fi API, optionally filtering by chain or project",
                                     "inputSchema": {
                                         "type": "object",
                                         "properties": {
-                                            "sort_by": {"type": "string", "default": "apy"},
-                                            "ascending": {"type": "boolean", "default": False},
-                                            "limit": {"type": "integer", "default": 20},
-                                            "min_apy": {"type": "number"}
+                                            "chain": {"type": "string", "description": "Optional filter for blockchain (e.g., 'Ethereum', 'Solana')"},
+                                            "project": {"type": "string", "description": "Optional filter for project name (e.g., 'lido', 'aave-v3')"}
                                         }
                                     }
                                 }
@@ -566,6 +566,7 @@ async def run_http_server(port: int):
     
     async def health_endpoint(request):
         """Health check endpoint."""
+        logger.info(f"Health check requested from {request.client}")
         return JSONResponse({
             "status": "healthy", 
             "server": "DefiLlama MCP",
@@ -581,11 +582,16 @@ async def run_http_server(port: int):
             }
         })
     
+    async def test_endpoint(request):
+        """Simple test endpoint."""
+        return JSONResponse({"message": "Server is running", "timestamp": time.time()})
+    
     # Create Starlette app
     app = Starlette(
         routes=[
             Route("/mcp", mcp_endpoint, methods=["GET", "POST", "DELETE"]),
             Route("/health", health_endpoint, methods=["GET"]),
+            Route("/test", test_endpoint, methods=["GET"]),
             Route("/", health_endpoint, methods=["GET"])
         ]
     )
@@ -600,14 +606,20 @@ async def run_http_server(port: int):
     )
     
     # Run the server
+    logger.info(f"Starting HTTP server on 0.0.0.0:{port}")
     config = uvicorn.Config(
         app,
         host="0.0.0.0",
         port=port,
-        log_level="info"
+        log_level="info",
+        access_log=True
     )
     server = uvicorn.Server(config)
-    await server.serve()
+    try:
+        await server.serve()
+    except Exception as e:
+        logger.error(f"Failed to start HTTP server: {e}")
+        raise
 
 if __name__ == "__main__":
     asyncio.run(main())
